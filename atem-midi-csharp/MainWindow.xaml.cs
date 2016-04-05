@@ -32,6 +32,10 @@ namespace atem_midi_csharp
 
         private bool invertSlider = false;
 
+        private List<MixerInput> inputList = new List<MixerInput>();
+
+        private event EventHandler<ChannelMessageEventArgs> MidiReceived;
+
         public MainWindow()
         {
             InitializeComponent();
@@ -79,12 +83,36 @@ namespace atem_midi_csharp
                 MessageBox.Show("Unexpected: Could not get first mix effect block", "Error");
             }
 
+            IBMDSwitcherInput currentInput = null;
+            IBMDSwitcherInputIterator inputIterator = null;
+            IntPtr inputIteratorPtr;
+            Guid inputIteratorIID = typeof(IBMDSwitcherInputIterator).GUID;
+            switcher.CreateIterator(ref inputIteratorIID, out inputIteratorPtr);
+            if(inputIteratorPtr != null)
+            {
+                inputIterator = (IBMDSwitcherInputIterator)Marshal.GetObjectForIUnknown(inputIteratorPtr);
+            }
+
+            if(inputIterator != null)
+            {
+                inputIterator.Next(out currentInput);
+                while(currentInput != null)
+                {
+                    MixerInput input = new MixerInput(currentInput);
+                    MidiReceived += input.OnMidi;
+                    inputList.Add(input);
+                    inputIterator.Next(out currentInput);
+                }
+            }
+
             mixEffectBlock1.AddCallback(monitor);
             monitor.InTransitionChanged += new MixerMonitorEventHandler((s, a) => this.Dispatcher.Invoke((Action)(() => InTransitionChanged(s, a))));
 
             InputDevice indev = new Sanford.Multimedia.Midi.InputDevice(3);
             indev.ChannelMessageReceived += Indev_ChannelMessageReceived;
             indev.StartRecording();
+
+            mappingList.ItemsSource = inputList;
         }
 
         private void InTransitionChanged(object sender, object args)
@@ -106,6 +134,7 @@ namespace atem_midi_csharp
 
         private void Indev_ChannelMessageReceived(object sender, ChannelMessageEventArgs e)
         {
+            MidiReceived(sender, e);
             if(e.Message.Command == ChannelCommand.Controller && e.Message.Data1 == 0)
             {
                 float val = ((float)e.Message.Data2) / 127f;
@@ -119,6 +148,11 @@ namespace atem_midi_csharp
                 }
                 mixEffectBlock1.SetFloat(_BMDSwitcherMixEffectBlockPropertyId.bmdSwitcherMixEffectBlockPropertyIdTransitionPosition, val);
             }
+        }
+
+        private void mapButton_Click(object sender, RoutedEventArgs e)
+        {
+
         }
     }
 }

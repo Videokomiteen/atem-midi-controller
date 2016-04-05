@@ -13,6 +13,10 @@
                 <MenuItem Header="_Load configuration" />
             </MenuItem>
         </Menu>
-        <DataGrid x:Name="dataGrid"/>
+        <ListBox DockPanel.Dock="Left" Width="250" x:Name="mappingList"/>
+        <StackPanel>
+            <Label Content="Not mapped"/>
+            <Button Content="Map" x:Name="mapButton" Click="mapButton_Click"/>
+        </StackPanel>
     </DockPanel>
 </Window>
