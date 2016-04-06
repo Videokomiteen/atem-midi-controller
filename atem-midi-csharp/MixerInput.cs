@@ -5,7 +5,6 @@ namespace atem_midi_csharp
 {
     class MixerInput
     {
-        private bool isMapping = false;
         public string LongName
         {
             get
@@ -25,7 +24,7 @@ namespace atem_midi_csharp
             }
         }
         public IBMDSwitcherInput input;
-        public MidiMapping mapping; 
+        public MidiMapping mapping = null; 
 
         public MixerInput(IBMDSwitcherInput inpt)
         {
@@ -34,7 +33,8 @@ namespace atem_midi_csharp
 
         public override string ToString()
         {
-            return LongName;
+            string mapStr = mapping != null ? mapping.ToString() : "Not mapped";
+            return ShortName + " - " + mapStr;
         }
 
         public class MidiMapping
@@ -47,13 +47,10 @@ namespace atem_midi_csharp
                 Command = command;
                 Data1 = data1;
             }
-        }
 
-        public void OnMidi(object sender, ChannelMessageEventArgs e)
-        {
-            if (e.Message.Command == mapping.Command && e.Message.Data1 == mapping.Data1)
+            public override string ToString()
             {
-                
+                return Command.ToString() + ":" + Data1.ToString();
             }
         }
     }

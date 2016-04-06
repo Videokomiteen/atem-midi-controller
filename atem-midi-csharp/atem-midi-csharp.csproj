@@ -63,13 +63,17 @@
       <DependentUpon>App.xaml</DependentUpon>
       <SubType>Code</SubType>
     </Compile>
+    <Compile Include="ATEMInputMapping.cs" />
+    <Compile Include="ATEMMapping.cs" />
     <Compile Include="MainWindow.xaml.cs">
       <DependentUpon>MainWindow.xaml</DependentUpon>
       <SubType>Code</SubType>
     </Compile>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="MidiMapping.cs" />
     <Compile Include="MixerInput.cs" />
+    <Compile Include="MixerMapping.cs" />
     <Compile Include="MixerMonitor.cs" />
     <Compile Include="Properties\AssemblyInfo.cs">
       <SubType>Code</SubType>

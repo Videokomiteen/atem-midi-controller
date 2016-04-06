@@ -15,6 +15,7 @@ using Sanford.Multimedia.Midi;
 
 using BMDSwitcherAPI;
 using System.Runtime.InteropServices;
+using System.ComponentModel;
 
 namespace atem_midi_csharp
 {
@@ -31,10 +32,11 @@ namespace atem_midi_csharp
         private MixerMonitor monitor = new MixerMonitor();
 
         private bool invertSlider = false;
+        private bool isMapping = false;
 
         private List<MixerInput> inputList = new List<MixerInput>();
 
-        private event EventHandler<ChannelMessageEventArgs> MidiReceived;
+        private InputDevice indev;
 
         public MainWindow()
         {
@@ -99,7 +101,6 @@ namespace atem_midi_csharp
                 while(currentInput != null)
                 {
                     MixerInput input = new MixerInput(currentInput);
-                    MidiReceived += input.OnMidi;
                     inputList.Add(input);
                     inputIterator.Next(out currentInput);
                 }
@@ -108,7 +109,7 @@ namespace atem_midi_csharp
             mixEffectBlock1.AddCallback(monitor);
             monitor.InTransitionChanged += new MixerMonitorEventHandler((s, a) => this.Dispatcher.Invoke((Action)(() => InTransitionChanged(s, a))));
 
-            InputDevice indev = new Sanford.Multimedia.Midi.InputDevice(3);
+            indev = new Sanford.Multimedia.Midi.InputDevice(3);
             indev.ChannelMessageReceived += Indev_ChannelMessageReceived;
             indev.StartRecording();
 
@@ -134,7 +135,23 @@ namespace atem_midi_csharp
 
         private void Indev_ChannelMessageReceived(object sender, ChannelMessageEventArgs e)
         {
-            MidiReceived(sender, e);
+            if (isMapping)
+            {
+                ((MixerInput)mappingList.SelectedValue).mapping = new MixerInput.MidiMapping(e.Message.Command, e.Message.Data1);
+                stopMapping();
+            }
+            else
+            {
+                foreach(MixerInput inpt in inputList)
+                {
+                    if(inpt.mapping != null && inpt.mapping.Command == e.Message.Command && inpt.mapping.Data1 == e.Message.Data1)
+                    {
+                        long id;
+                        inpt.input.GetInputId(out id);
+                        mixEffectBlock1.SetInt(_BMDSwitcherMixEffectBlockPropertyId.bmdSwitcherMixEffectBlockPropertyIdPreviewInput, id);
+                    }
+                }
+            }
             if(e.Message.Command == ChannelCommand.Controller && e.Message.Data1 == 0)
             {
                 float val = ((float)e.Message.Data2) / 127f;
@@ -152,7 +169,33 @@ namespace atem_midi_csharp
 
         private void mapButton_Click(object sender, RoutedEventArgs e)
         {
+            if (!isMapping)
+            {
+                startMapping();
+            } else
+            {
+                stopMapping();
+            }
+        }
 
+        private void stopMapping()
+        {
+            isMapping = false;
+            mappingList.IsEnabled = true;
+            ICollectionView view = CollectionViewSource.GetDefaultView(inputList);
+            view.Refresh();
+        }
+
+        private void startMapping()
+        {
+            isMapping = true;
+            mappingList.IsEnabled = false;
+        }
+
+        private void Window_Closing(object sender, System.ComponentModel.CancelEventArgs e)
+        {
+            indev.StopRecording();
+            indev.Close();
         }
     }
 }

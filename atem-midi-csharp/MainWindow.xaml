@@ -5,7 +5,8 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:atem_midi_csharp"
         mc:Ignorable="d"
-        Title="MIDI Mapping" Height="350" Width="525">
+        Title="MIDI Mapping" Height="350" Width="525"
+        Closing="Window_Closing">
     <DockPanel LastChildFill="True">
         <Menu x:Name="menu" DockPanel.Dock="Top">
             <MenuItem Header="_File">
@@ -15,7 +16,7 @@
         </Menu>
         <ListBox DockPanel.Dock="Left" Width="250" x:Name="mappingList"/>
         <StackPanel>
-            <Label Content="Not mapped"/>
+            <Label Content="{Binding ElementName=mappingList, Path=SelectedValue}" x:Name="mapLabel"/>
             <Button Content="Map" x:Name="mapButton" Click="mapButton_Click"/>
         </StackPanel>
     </DockPanel>
